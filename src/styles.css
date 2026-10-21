@@ -397,8 +397,10 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 @keyframes popIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 
 /* ============ 右侧详情面板 ============ */
+/* sticky 挂在 grid 子项（Reveal wrapper）上：面板内容在整列高度内跟随视口浮动 */
+.trace-layout .sticky-col { position: sticky; top: 80px; }
 .detail-panel {
-  position: sticky; top: 80px; max-height: calc(100vh - 104px);
+  max-height: calc(100vh - 104px);
   display: flex; flex-direction: column; overflow: hidden;
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
   box-shadow: 0 8px 30px rgba(var(--text-rgb), 0.07);
@@ -438,6 +440,11 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   background: rgba(var(--error-rgb), 0.07); border: 1px solid rgba(var(--error-rgb), 0.25);
   color: var(--error); font: 500 12px/1.7 var(--font-mono); word-break: break-all;
 }
+
+/* 概览内：用户输入 / 模型输出快览 */
+.ovr-sec { margin-top: 14px; }
+.ovr-title { font: 600 11px/1 var(--font-sans); color: var(--text-tertiary); letter-spacing: 0.05em; margin-bottom: 8px; }
+.ovr-tools { font: 500 12px/1.7 var(--font-mono); color: var(--text-secondary); word-break: break-all; }
 
 .msg { margin-bottom: 14px; }
 .msg:last-child { margin-bottom: 0; }

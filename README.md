@@ -69,9 +69,10 @@ npm run gateway             # 网关读取 claude.settings 的上游与 token
 
 1. **session**：从 `metadata.user_id` 的 `_session_` 后缀提取（无则按 system + 首条消息指纹）
 2. **轮次（turn）**：有效末条消息为纯用户文本 && 无未闭合 Task/Agent && 非子 Agent 接任务 → 新轮次（忽略 CC 2.1.x 追加在末尾的 `system` 提醒消息，如 `<total_tokens>`）
-3. **子 Agent**：响应含 `Task`（旧版）/ `Agent`（CC 2.1.x+）tool_use 时开启容器；其后 system 指纹变化且任务未闭合的请求归入其下，收到对应 tool_result 时闭合
-4. **工具 span**：上一请求 tool_use 与下一请求 tool_result 之间的时间窗，自动推导并行
-5. **后台 Agent**：同用户的无工具辅助请求（如 CC 的 security monitor）作为「后台 Agent」子树并入最近一条 Trace，主 Agent 委派与后台监控同屏观测
+3. **子 Agent（同会话，旧版 Task）**：响应含 `Task` tool_use 时开启容器；其后 system 指纹变化且任务未闭合的请求归入其下，收到对应 tool_result 时闭合
+4. **子 Agent（跨会话，CC 2.1.x Agent 异步委派）**：子 Agent 在独立 session 中运行，先按「委派 prompt ↔ 子会话首条消息全文」精确匹配，历史数据回退到任务特征关键词评分归因；多个并行委派各自成容器
+5. **工具 span**：上一请求 tool_use 与下一请求 tool_result 之间的时间窗，自动推导并行
+6. **后台 Agent**：同用户的无工具辅助请求（如 CC 的 security monitor）作为「后台 Agent」子树并入最近一条 Trace，主 Agent 委派与后台监控同屏观测
 
 ## 项目结构
 

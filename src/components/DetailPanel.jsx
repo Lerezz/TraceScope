@@ -118,15 +118,41 @@ function OverviewTab({ span }) {
   }
   if (span.cost != null) rows.push(['费用', fmtCost(span.cost || 0)])
   if (span.metadata?.retry_of) rows.push(['重试自', span.metadata.retry_of])
+
+  // 快速通道：本次调用的用户指令与模型输出（长内容可点开全量）
+  const userMsg = [...(span.input?.messages || [])]
+    .reverse()
+    .find((m) => m.role === 'user' && m.msgKind !== 'tool_result')
+  const outText =
+    typeof span.output === 'string' ? span.output : typeof span.output?.text === 'string' ? span.output.text : null
+  const toolNames = Array.isArray(span.output?.tool_uses) && span.output.tool_uses.map((t) => t.name).filter(Boolean)
+
   return (
     <div>
       <KV rows={rows} />
       {span.status === 'error' && span.error && <div className="error-box">{span.error}</div>}
+      {userMsg?.content && (
+        <div className="ovr-sec">
+          <div className="ovr-title">用户输入</div>
+          <MessageBlock role="user" content={userMsg.content} />
+        </div>
+      )}
+      {(outText || toolNames?.length) && (
+        <div className="ovr-sec">
+          <div className="ovr-title">模型输出</div>
+          {outText ? (
+            <MessageBlock role="assistant" content={outText} />
+          ) : (
+            <div className="ovr-tools">决策调用：{toolNames.join(' / ')}</div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
 
 export default function DetailPanel({ entry, onClose, mobileOpen }) {
+  // 默认展开「概览」：概览已内含用户输入 + 模型输出快览
   const [tab, setTab] = useState('overview')
   const span = entry?.span
   useEffect(() => setTab('overview'), [span?.id])

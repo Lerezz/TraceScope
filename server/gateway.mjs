@@ -114,6 +114,9 @@ function makeRecord(body, t0) {
     msgs.length <= 4
       ? msgs
       : [...msgs.slice(0, 2), { role: '…', content: `…共 ${msgs.length} 条消息…` }, ...msgs.slice(-2)]
+  // 会话开头的首条 user 消息全文（跨会话子 Agent 归因用：任务 prompt 常在 CLAUDE.md 提醒之后，2000 字截断会丢失）
+  const firstUserFull =
+    msgs.length <= 3 ? trunc(textOf(msgs.find((m) => m?.role === 'user')?.content), 8000) : undefined
 
   return {
     kind: 'messages',
@@ -128,6 +131,7 @@ function makeRecord(body, t0) {
     stream: !!body.stream,
     systemHash: sha1(systemText),
     systemPreview: trunc(systemText, 6000), // 全量上限：超长 system prompt 截断
+    firstUserFull,
     // 注意：不能匹配宽泛的 "You are an agent"——CC 2.1.x 主 Agent 的 system 同样包含该句
     subagentHint: /agent for Claude Code/i.test(systemText),
     toolsOffered: (body.tools || []).map((t) => t.name).slice(0, 14),

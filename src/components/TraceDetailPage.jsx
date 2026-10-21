@@ -164,7 +164,7 @@ export default function TraceDetailPage({ trace, onBack }) {
           </div>
         </Reveal>
 
-        <Reveal delay={0.16}>
+        <Reveal delay={0.16} className="sticky-col">
           <DetailPanel entry={selected} onClose={() => setMobileOpen(false)} mobileOpen={mobileOpen} />
         </Reveal>
       </div>
