@@ -1,0 +1,15 @@
+{
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "在此填入你的 API token",
+    "ANTHROPIC_BASE_URL": "http://127.0.0.1:8787",
+    "ANTHROPIC_BASE_URL_BAK": "https://open.bigmodel.cn/api/anthropic",
+    "GW_UPSTREAM": "https://open.bigmodel.cn/api/anthropic",
+    "API_TIMEOUT_MS": "3000000",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "glm-4.5-flash",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "glm-4.5-flash",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-4.5-flash",
+    "CLAUDE_CODE_AUTO_COMPACT_WINDOW": "1048576"
+  },
+  "model": "opus"
+}

@@ -1,0 +1,11 @@
+node_modules
+dist
+*.local
+
+# 敏感与本地数据：禁止入库
+claude.settings
+server/data/
+
+# 系统与缓存
+.DS_Store
+*.log

@@ -1,0 +1,22 @@
+{
+  "name": "trajectory-analyse",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "gateway": "node server/gateway.mjs",
+    "gateway:demo": "GW_FAKE=1 node server/gateway.mjs",
+    "simulate": "node server/test/simulate-claude.mjs"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "vite": "^5.4.11"
+  }
+}
