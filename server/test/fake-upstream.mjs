@@ -1,5 +1,5 @@
 // ============ 模拟上游：无真实 Anthropic key 时的可演示后端 ============
-// 按请求特征返回脚本化响应，覆盖「主 Agent → Task 子 Agent → 工具」完整链路
+// 按请求特征返回脚本化响应，覆盖「主 Agent → 子 Agent（Task/Agent 工具）→ 工具」完整链路
 
 let _n = 0
 const uid = (p) => `${p}_${(++_n).toString(36).padStart(4, '0')}${Math.random().toString(36).slice(2, 6)}`
@@ -13,10 +13,16 @@ function textJoin(sys) {
 }
 
 function decide(body) {
-  const isSub = /agent for Claude Code|You are an agent/i.test(sysText(body))
+  // 注意：CC 2.1.x 主 Agent 的 system 同样含 "You are an agent"，只认更精确的子 Agent 措辞
+  const isSub = /agent for Claude Code/i.test(sysText(body))
   const msgs = body.messages || []
   const hasAnyToolResult = msgs.some((m) => Array.isArray(m.content) && m.content.some((b) => b.type === 'tool_result'))
-  const lastBlocks = Array.isArray(msgs[msgs.length - 1]?.content) ? msgs[msgs.length - 1].content : []
+  // 忽略 CC 2.1.x 追加在末尾的 role=system 提醒（如 <total_tokens>…）
+  let last = null
+  for (let i = msgs.length - 1; i >= 0; i--) {
+    if (msgs[i]?.role !== 'system') { last = msgs[i]; break }
+  }
+  const lastBlocks = Array.isArray(last?.content) ? last.content : []
   const lastIsToolResult = lastBlocks.some((b) => b.type === 'tool_result')
 
   if (isSub) {
@@ -35,7 +41,7 @@ function decide(body) {
   if (!hasAnyToolResult)
     return {
       stop_reason: 'tool_use',
-      blocks: [{ type: 'tool_use', id: uid('toolu'), name: 'Task', input: { subagent_type: 'code-searcher', description: '在仓库中定位网关核心实现文件', prompt: '搜索 server 目录，找到 HTTP server 创建与消息记录的位置并总结。' } }],
+      blocks: [{ type: 'tool_use', id: uid('toolu'), name: 'Agent', input: { subagent_type: 'code-searcher', description: '在仓库中定位网关核心实现文件', prompt: '搜索 server 目录，找到 HTTP server 创建与消息记录的位置并总结。' } }],
       usage: { input_tokens: 2860, output_tokens: 152 },
     }
   return {

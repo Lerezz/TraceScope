@@ -7,7 +7,7 @@
 ## 功能特性
 
 - **Anthropic 兼容网关**：`POST /v1/messages` 全透传（含 SSE 流式），边转发边采集 tokens（含 cache 读写）、tool_use、stop_reason、耗时与错误
-- **层级重建**：session → 会话轮次 → 主 Agent → Task 子 Agent → LLM / 工具，自动识别并行执行、失败与网关重试
+- **层级重建**：session → 会话轮次 → 主 Agent → Task/Agent 子 Agent / 后台 Agent → LLM / 工具，自动识别并行执行、失败与网关重试
 - **Trajectory 视图**
   - 层级树：缩进 + 彩色缩进连线（父级类型色）+ 类型徽章三重编码
   - 瀑布时间线：共享时间原点的 Gantt 条，直接看出子 Agent 并行
@@ -68,9 +68,10 @@ npm run gateway             # 网关读取 claude.settings 的上游与 token
 ## 层级重建原理
 
 1. **session**：从 `metadata.user_id` 的 `_session_` 后缀提取（无则按 system + 首条消息指纹）
-2. **轮次（turn）**：请求末条消息为纯用户文本 && 无未闭合 Task && 非子 Agent 接任务 → 新轮次
-3. **子 Agent**：响应含 `Task` tool_use 时开启容器；其后 system 指纹变化且 Task 未闭合的请求归入其下，收到对应 tool_result 时闭合
+2. **轮次（turn）**：有效末条消息为纯用户文本 && 无未闭合 Task/Agent && 非子 Agent 接任务 → 新轮次（忽略 CC 2.1.x 追加在末尾的 `system` 提醒消息，如 `<total_tokens>`）
+3. **子 Agent**：响应含 `Task`（旧版）/ `Agent`（CC 2.1.x+）tool_use 时开启容器；其后 system 指纹变化且任务未闭合的请求归入其下，收到对应 tool_result 时闭合
 4. **工具 span**：上一请求 tool_use 与下一请求 tool_result 之间的时间窗，自动推导并行
+5. **后台 Agent**：同用户的无工具辅助请求（如 CC 的 security monitor）作为「后台 Agent」子树并入最近一条 Trace，主 Agent 委派与后台监控同屏观测
 
 ## 项目结构
 

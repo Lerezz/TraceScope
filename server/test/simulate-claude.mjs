@@ -32,7 +32,7 @@ async function callMessages({ system, messages, stream = true }) {
       tools: [
         { name: 'Bash', description: 'run shell', input_schema: { type: 'object' } },
         { name: 'Grep', description: 'search', input_schema: { type: 'object' } },
-        { name: 'Task', description: 'spawn subagent', input_schema: { type: 'object' } },
+        { name: 'Agent', description: 'spawn subagent', input_schema: { type: 'object' } },
       ],
       messages,
     }),
@@ -69,12 +69,14 @@ function parseSSE(text) {
 const asUserText = (m) => ({ role: 'user', content: [{ type: 'text', text: m }] })
 const asAssistant = (msg) => ({ role: 'assistant', content: msg.toolUses.map((t) => ({ type: 'tool_use', id: t.id, name: t.name, input: t.input })) })
 const asToolResult = (id, content, isError) => ({ role: 'user', content: [{ type: 'tool_result', tool_use_id: id, is_error: !!isError, content }] })
+// CC 2.1.x 会在每条请求末尾追加 role=system 的提醒消息，模拟该行为以覆盖网关的忽略逻辑
+const asSysReminder = () => ({ role: 'system', content: `<total_tokens>${14998990 - Math.floor(Math.random() * 1e4)} tokens left</total_tokens>` })
 
 async function main() {
   console.log(`[sim] 目标网关 ${GW}  session=${SESSION}`)
 
-  // R1 主 Agent：用户提问 → 决策调用 Task
-  const m1 = [asUserText('帮我看下这个项目的网关核心实现在哪，并总结它做了什么')]
+  // R1 主 Agent：用户提问 → 决策调用 Agent（委派子 Agent）
+  const m1 = [asUserText('帮我看下这个项目的网关核心实现在哪，并总结它做了什么'), asSysReminder()]
   const r1 = await callMessages({ system: SYS_MAIN, messages: m1 })
   console.log(`[sim] R1 主Agent → ${r1.stop_reason} ${r1.toolUses.map((t) => t.name).join(',') || r1.text.slice(0, 30)}`)
   await sleep(120)
@@ -83,20 +85,20 @@ async function main() {
   const taskPrompt = task.input.prompt
 
   // R2 子 Agent：接收任务 → 决策调用 Grep
-  const m2 = [asUserText(taskPrompt)]
+  const m2 = [asUserText(taskPrompt), asSysReminder()]
   const r2 = await callMessages({ system: SYS_SUB, messages: m2 })
   console.log(`[sim] R2 子Agent → ${r2.stop_reason} ${r2.toolUses.map((t) => t.name).join(',')}`)
   await sleep(150)
 
   // R3 子 Agent：Grep 结果 → 总结
   const grep = r2.toolUses[0]
-  const m3 = [...m2, asAssistant(r2), asToolResult(grep.id, 'server/gateway.mjs:88 http.createServer\nserver/gateway.mjs:143 handleMessages\nserver/tree-builder.mjs:152 buildTraces')]
+  const m3 = [...m2, asAssistant(r2), asToolResult(grep.id, 'server/gateway.mjs:88 http.createServer\nserver/gateway.mjs:143 handleMessages\nserver/tree-builder.mjs:152 buildTraces'), asSysReminder()]
   const r3 = await callMessages({ system: SYS_SUB, messages: m3 })
   console.log(`[sim] R3 子Agent → ${r3.stop_reason} ${r3.text.slice(0, 40)}…`)
   await sleep(130)
 
-  // R4 主 Agent：Task 结果 → 最终回答
-  const m4 = [...m1, asAssistant(r1), asToolResult(task.id, r3.text)]
+  // R4 主 Agent：Agent 结果 → 最终回答
+  const m4 = [...m1, asAssistant(r1), asToolResult(task.id, r3.text), asSysReminder()]
   const r4 = await callMessages({ system: SYS_MAIN, messages: m4 })
   console.log(`[sim] R4 主Agent → ${r4.stop_reason} ${r4.text.slice(0, 40)}…`)
 

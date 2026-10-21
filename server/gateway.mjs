@@ -100,7 +100,11 @@ function msgKind(m) {
 
 function makeRecord(body, t0) {
   const msgs = body.messages || []
-  const last = msgs[msgs.length - 1]
+  // CC 2.1.x 会在消息末尾追加 role=system 的提醒（如 <total_tokens>…），判定轮次 / 工具结果时应忽略
+  let last = null
+  for (let i = msgs.length - 1; i >= 0; i--) {
+    if (msgs[i]?.role !== 'system') { last = msgs[i]; break }
+  }
   const lastBlocks = Array.isArray(last?.content) ? last.content : []
   const lastIsToolResult =
     last?.role === 'user' && lastBlocks.some((b) => b.type === 'tool_result')
@@ -124,7 +128,8 @@ function makeRecord(body, t0) {
     stream: !!body.stream,
     systemHash: sha1(systemText),
     systemPreview: trunc(systemText, 6000), // 全量上限：超长 system prompt 截断
-    subagentHint: /agent for Claude Code|You are an agent/i.test(systemText),
+    // 注意：不能匹配宽泛的 "You are an agent"——CC 2.1.x 主 Agent 的 system 同样包含该句
+    subagentHint: /agent for Claude Code/i.test(systemText),
     toolsOffered: (body.tools || []).map((t) => t.name).slice(0, 14),
     messagesPreview: preview.map((m) => ({
       role: m.role,
