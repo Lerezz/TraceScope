@@ -169,7 +169,7 @@ export default function TraceDetailPage({ trace, onBack }) {
         </Reveal>
       </div>
 
-      <p className="page-foot">Trajectory Console · Mock 数据演示 · 亮色工程台</p>
+      <p className="page-foot">TraceScope · Mock 数据演示 · 亮色工程台</p>
     </div>
   )
 }

@@ -16,7 +16,7 @@ export default function TopBar({ query, setQuery, range, setRange, showSearch, o
         <button className="brand" onClick={onHome} aria-label="返回首页">
           <span className="brand-mark"><IconLogo /></span>
           <span className="brand-txt">
-            <span className="brand-name">Trajectory</span>
+            <span className="brand-name">TraceScope</span>
             <span className="brand-sub">LLM GATEWAY 观测台</span>
           </span>
         </button>

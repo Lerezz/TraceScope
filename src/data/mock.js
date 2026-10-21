@@ -25,7 +25,7 @@ const heroTree = sp({
   input: {
     messages: [
       { role: 'system', content: '你是工程分析编排 Agent。将复杂任务拆解为子任务，并行调度子 Agent，最后汇总输出。' },
-      { role: 'user', content: '帮我分析 trajectory-analyse 这个仓库的架构，评估测试覆盖情况，并给出重构建议。' },
+      { role: 'user', content: '帮我分析 tracescope 这个仓库的架构，评估测试覆盖情况，并给出重构建议。' },
     ],
   },
   output:
@@ -38,7 +38,7 @@ const heroTree = sp({
       input: {
         messages: [
           { role: 'system', content: '任务规划器：把用户请求拆解为可并行的子任务，输出 JSON 计划。' },
-          { role: 'user', content: '帮我分析 trajectory-analyse 这个仓库的架构，评估测试覆盖情况，并给出重构建议。' },
+          { role: 'user', content: '帮我分析 tracescope 这个仓库的架构，评估测试覆盖情况，并给出重构建议。' },
         ],
       },
       output:
@@ -61,7 +61,7 @@ const heroTree = sp({
         sp({
           id: 'a1', type: 'llm', name: '加载分析指令', start: 4640, end: 6880,
           model: 'gpt-4o-mini', provider: 'openai', tokensIn: 2104, tokensOut: 312, cost: 0.0013,
-          input: { messages: [{ role: 'system', content: '你是代码架构分析师，按指令逐步读取仓库并产出依赖结论。' }, { role: 'user', content: '任务：分析 trajectory-analyse 仓库的模块结构与依赖关系。' }] },
+          input: { messages: [{ role: 'system', content: '你是代码架构分析师，按指令逐步读取仓库并产出依赖结论。' }, { role: 'user', content: '任务：分析 tracescope 仓库的模块结构与依赖关系。' }] },
           output: '指令解析完成。计划：list_tree → read 关键文件 → parse_imports → 输出结论。',
           metadata: { temperature: 0.1 },
         }),
@@ -297,7 +297,7 @@ const T8 = sp({
 
 /* ---------- Trace 列表 ---------- */
 export const TRACES = [
-  { id: 'tr_9f27ac', name: '仓库架构分析 · 主 Agent 编排', ts: NOW - 3 * 60e3, user: 'u_li_dev', conv: '会话 #4821 · 第 3 轮', query: '帮我分析 trajectory-analyse 这个仓库的架构…', tree: heroTree },
+  { id: 'tr_9f27ac', name: '仓库架构分析 · 主 Agent 编排', ts: NOW - 3 * 60e3, user: 'u_li_dev', conv: '会话 #4821 · 第 3 轮', query: '帮我分析 tracescope 这个仓库的架构…', tree: heroTree },
   { id: 'tr_4b81de', name: 'RAG 知识库问答', ts: NOW - 18 * 60e3, user: 'u_wang_ops', conv: '会话 #4819 · 第 1 轮', query: '网关限流策略支持按模型维度配置吗？', tree: T2 },
   { id: 'tr_c23a90', name: '代码评审 · PR #482', ts: NOW - 74 * 60e3, user: 'u_zhang_fe', conv: ' webhook · pr#482 ', query: '评审 PR #482：gateway 重试逻辑改造', tree: T3 },
   { id: 'tr_7e55f1', name: 'SQL 生成与执行', ts: NOW - 3 * 3600e3, user: 'u_li_dev', conv: '会话 #4802 · 第 1 轮', query: '查最近 7 天延迟 P95 最高的 5 个模型', tree: T4 },

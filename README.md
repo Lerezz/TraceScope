@@ -1,4 +1,4 @@
-# Trajectory Console
+# TraceScope
 
 > LLM 网关 × Agent 调用轨迹（Trajectory）观测台 —— 把 Claude Code 的每一轮对话重建成可观测的层级树。
 
