@@ -1,10 +1,11 @@
 import { cx, fmtMs, fmtTok } from '../utils/format.js'
 import { IconChevron, IconAlert, IconCpu, IconLayers, IconSparkles, IconWrench } from './icons.jsx'
 
-export const TYPE_ICON = { agent: IconCpu, subagent: IconLayers, llm: IconSparkles, tool: IconWrench }
-export const TYPE_LABEL = { agent: 'Agent', subagent: 'Sub-Agent', llm: 'LLM', tool: 'Tool' }
+export const TYPE_ICON = { agent: IconCpu, turn: IconCpu, subagent: IconLayers, llm: IconSparkles, tool: IconWrench }
+export const TYPE_LABEL = { agent: 'Agent', turn: '轮次', subagent: 'Sub-Agent', llm: 'LLM', tool: 'Tool' }
 const TYPE_RGB = {
   agent: 'var(--span-agent-rgb)',
+  turn: 'var(--span-turn-rgb)',
   subagent: 'var(--span-subagent-rgb)',
   llm: 'var(--span-llm-rgb)',
   tool: 'var(--span-tool-rgb)',

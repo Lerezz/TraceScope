@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import SpanTree from './SpanTree.jsx'
 import DetailPanel from './DetailPanel.jsx'
-import { flatten, treeStats, orderMap, extractConversation } from '../utils/trace.js'
+import { flatten, treeStats, orderMap, extractConversation, originMeta } from '../utils/trace.js'
 import { fmtMs, fmtNum, fmtCost, cx } from '../utils/format.js'
 import { Reveal } from '../hooks/useReveal.jsx'
 import { IconArrowLeft, IconUser } from './icons.jsx'
@@ -12,7 +12,11 @@ const fmtTick = (ms) => `${+(ms / 1000).toFixed(1)}s`
 
 export default function TraceDetailPage({ trace, onBack }) {
   const root = trace.tree
-  const [collapsed, setCollapsed] = useState(() => new Set())
+  // 大链 trace 默认只展开第一轮，避免一次性渲染上千行
+  const [collapsed, setCollapsed] = useState(() => {
+    const turns = flatten(root).filter((f) => f.span.type === 'turn')
+    return new Set(turns.slice(1).map((f) => f.span.id))
+  })
   const [selectedId, setSelectedId] = useState(root.id)
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -75,6 +79,7 @@ export default function TraceDetailPage({ trace, onBack }) {
               <i className={`dot ${err ? 'dot-err' : 'dot-ok'}`} />
               {err ? '失败' : '成功'}
             </span>
+            <span className={cx('origin-chip', originMeta(trace).cls)}>{originMeta(trace).label}</span>
             <span className="th-id">{trace.id}</span>
           </div>
           <div className="th-query">
@@ -153,6 +158,7 @@ export default function TraceDetailPage({ trace, onBack }) {
             <SpanTree root={root} ctx={treeCtx} />
             <div className="tree-toolbar" style={{ borderTop: '1px solid var(--border)', borderBottom: 'none' }}>
               <div className="legend">
+                <span className="lg-turn"><i />轮次</span>
                 <span className="lg-agent"><i />Agent</span>
                 <span className="lg-subagent"><i />Sub-Agent</span>
                 <span className="lg-llm"><i />LLM</span>
@@ -165,7 +171,7 @@ export default function TraceDetailPage({ trace, onBack }) {
         </Reveal>
 
         <Reveal delay={0.16} className="sticky-col">
-          <DetailPanel entry={selected} onClose={() => setMobileOpen(false)} mobileOpen={mobileOpen} />
+          <DetailPanel entry={selected} systems={trace.systems} onClose={() => setMobileOpen(false)} mobileOpen={mobileOpen} />
         </Reveal>
       </div>
 

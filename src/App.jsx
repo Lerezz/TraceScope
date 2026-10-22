@@ -23,7 +23,7 @@ export default function App() {
     let alive = true
     ;(async () => {
       const t = await fetchLiveTraces()
-      if (alive && t) {
+      if (alive && t && t !== 'unchanged') {
         setLive(t)
         setSource('live')
       }
@@ -31,11 +31,13 @@ export default function App() {
     return () => { alive = false }
   }, [])
 
-  // 实时模式：每 4s 轮询网关（与 Claude Code 对话时新 Trace 自动出现；数据被清空时回退 Mock）
+  // 实时模式：每 4s 轮询网关（数据未变化时返回 'unchanged'，跳过 setState 与整树重渲染；
+  // 数据被清空时回退 Mock）
   useEffect(() => {
     if (source !== 'live') return
     const id = setInterval(async () => {
       const t = await fetchLiveTraces()
+      if (t === 'unchanged') return
       if (t) setLive(t)
       else {
         setLive(null)

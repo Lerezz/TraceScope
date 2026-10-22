@@ -39,6 +39,8 @@
   /* Span 类型语义色 */
   --span-agent: #7c3aed;
   --span-agent-rgb: 124, 58, 237;
+  --span-turn: #db2777;
+  --span-turn-rgb: 219, 39, 119;
   --span-llm: #2563eb;
   --span-llm-rgb: 37, 99, 235;
   --span-tool: #d97706;
@@ -202,6 +204,7 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
   border-radius: 999px; font: 500 10.5px/1 var(--font-sans); letter-spacing: 0.02em; flex: none;
 }
 .badge-agent { color: var(--span-agent); background: rgba(var(--span-agent-rgb), 0.09); }
+.badge-turn { color: var(--span-turn); background: rgba(var(--span-turn-rgb), 0.09); }
 .badge-llm { color: var(--span-llm); background: rgba(var(--span-llm-rgb), 0.08); }
 .badge-tool { color: var(--span-tool); background: rgba(var(--span-tool-rgb), 0.09); }
 .badge-subagent { color: var(--span-subagent); background: rgba(var(--span-subagent-rgb), 0.09); }
@@ -246,6 +249,33 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .seg-btn:hover { color: var(--text); }
 .seg-btn.active { background: var(--accent); color: var(--on-accent); }
 .toolbar-count { margin-left: auto; font: 400 12px/1 var(--font-sans); color: var(--text-tertiary); }
+
+/* 分页控件 */
+.pager { display: flex; align-items: center; gap: 8px; margin-left: auto; flex-wrap: wrap; }
+.pager-size {
+  display: inline-flex; align-items: center; gap: 6px;
+  font: 500 12px/1 var(--font-sans); color: var(--text-tertiary);
+}
+.pager-size select {
+  height: 26px; padding: 0 6px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--surface); font: 500 12px/1 var(--font-sans); color: var(--text);
+  cursor: pointer;
+}
+.pager-info { font: 400 12px/1 var(--font-sans); color: var(--text-tertiary); white-space: nowrap; }
+
+/* 轮次来源标注 */
+.origin-chip {
+  display: inline-flex; align-items: center; height: 17px; padding: 0 7px; margin-left: 8px;
+  border-radius: 4px; font: 600 10px/17px var(--font-sans); letter-spacing: 0.03em;
+  vertical-align: 1px; white-space: nowrap;
+}
+.origin-chip.o-user { background: rgba(var(--success-rgb), 0.12); color: var(--success); }
+.origin-chip.o-cross { background: rgba(var(--accent-rgb), 0.1); color: var(--accent); }
+.origin-chip.o-sys { background: var(--surface-alt); color: var(--text-tertiary); }
+.origin-chip.o-sum { background: rgba(180, 83, 9, 0.12); color: #b45309; }
+.origin-chip.o-ws, .origin-chip.o-sub { background: rgba(var(--span-subagent-rgb), 0.1); color: var(--span-subagent); }
+.origin-chip.o-task { background: rgba(var(--span-turn-rgb), 0.1); color: var(--span-turn); }
+.origin-chip.o-bg { background: rgba(var(--span-llm-rgb), 0.08); color: var(--span-llm); }
 
 .trace-table { overflow: hidden; }
 .thead, .trace-row {
@@ -309,6 +339,7 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .legend { display: flex; gap: 12px; flex-wrap: wrap; font: 500 11px/1.4 var(--font-sans); color: var(--text-secondary); align-items: center; }
 .legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; vertical-align: baseline; }
 .lg-agent i { background: var(--span-agent); }
+.lg-turn i { background: var(--span-turn); }
 .lg-subagent i { background: var(--span-subagent); }
 .lg-llm i { background: var(--span-llm); }
 .lg-tool i { background: var(--span-tool); }
@@ -351,6 +382,7 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 .chevron.blank { visibility: hidden; }
 .span-icon { width: 16px; height: 16px; flex: none; margin-right: 8px; display: grid; place-items: center; }
 .span-icon.agent { color: var(--span-agent); }
+.span-icon.turn { color: var(--span-turn); }
 .span-icon.subagent { color: var(--span-subagent); }
 .span-icon.llm { color: var(--span-llm); }
 .span-icon.tool { color: var(--span-tool); }
@@ -381,6 +413,7 @@ button { font: inherit; color: inherit; background: none; border: none; cursor: 
 }
 @keyframes barGrow { from { transform: translateY(-50%) scaleX(0); } to { transform: translateY(-50%) scaleX(1); } }
 .wf-bar.agent { background: var(--span-agent); }
+.wf-bar.turn { background: var(--span-turn); }
 .wf-bar.subagent { background: var(--span-subagent); }
 .wf-bar.llm { background: var(--span-llm); }
 .wf-bar.tool { background: var(--span-tool); }

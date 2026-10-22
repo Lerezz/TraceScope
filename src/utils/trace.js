@@ -70,3 +70,16 @@ export function extractConversation(root) {
   }
   return out
 }
+
+// 轮次来源（网关标注 origin 字段）：列表/详情展示标签与配色 class
+export const ORIGIN_META = {
+  user: { label: '用户输入', cls: 'o-user' },
+  'cross-session': { label: '跨会话消息', cls: 'o-cross' },
+  system: { label: '系统通知', cls: 'o-sys' },
+  summary: { label: '状态摘要', cls: 'o-sum' },
+  websearch: { label: '搜索 Agent', cls: 'o-ws' },
+  subagent: { label: '子 Agent', cls: 'o-sub' },
+  background: { label: '后台', cls: 'o-bg' },
+  task: { label: '任务下发', cls: 'o-task' },
+}
+export const originMeta = (t) => ORIGIN_META[t?.origin || 'user'] || ORIGIN_META.user

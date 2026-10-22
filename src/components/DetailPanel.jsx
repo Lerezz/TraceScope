@@ -70,9 +70,12 @@ function MessageBlock({ role, kind, content }) {
 }
 
 // 输入/输出渲染：system + messages 数组（每条独立展开）；对象 → JSON；字符串 → 单条消息
-function PayloadView({ data }) {
+// system 全文经 trace.systems 去重表按 systemHash 解析（兼容 mock 数据的 input.system 直填）
+function PayloadView({ data, systems }) {
   if (data == null) return <div className="empty-hint">无内容</div>
-  const sys = typeof data.system === 'string' && data.system.trim() ? data.system : null
+  const sys =
+    (systems && data.systemHash != null && systems[data.systemHash]) ||
+    (typeof data.system === 'string' && data.system.trim() ? data.system : null)
   const msgs = Array.isArray(data.messages) ? data.messages : null
 
   if (sys || msgs) {
@@ -151,7 +154,7 @@ function OverviewTab({ span }) {
   )
 }
 
-export default function DetailPanel({ entry, onClose, mobileOpen }) {
+export default function DetailPanel({ entry, onClose, mobileOpen, systems }) {
   // 默认展开「概览」：概览已内含用户输入 + 模型输出快览
   const [tab, setTab] = useState('overview')
   const span = entry?.span
@@ -211,12 +214,12 @@ export default function DetailPanel({ entry, onClose, mobileOpen }) {
         </div>
         <div className="panel-body">
           {tab === 'overview' && <OverviewTab span={span} />}
-          {tab === 'input' && <PayloadView data={span.input} />}
+          {tab === 'input' && <PayloadView data={span.input} systems={systems} />}
           {tab === 'output' && (
             span.status === 'error' && span.output == null ? (
               <div className="error-box">{span.error || '调用失败，无输出'}</div>
             ) : (
-              <PayloadView data={span.output} />
+              <PayloadView data={span.output} systems={systems} />
             )
           )}
           {tab === 'meta' && (
