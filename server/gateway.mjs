@@ -16,6 +16,7 @@ import http from 'node:http'
 import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
+import zlib from 'node:zlib'
 import { fileURLToPath } from 'node:url'
 import { buildTraces, costOf } from './tree-builder.mjs'
 import { fakeRespond } from './test/fake-upstream.mjs'
@@ -46,7 +47,7 @@ const UPSTREAM =
 const FALLBACK_TOKEN = SETTINGS_ENV.ANTHROPIC_AUTH_TOKEN
 const DATA_DIR = path.join(__dirname, 'data')
 const RECORDS_FILE = path.join(DATA_DIR, 'records.jsonl')
-const MAX_RECORDS = 2000
+const MAX_RECORDS = 10000 // 内存上限（导入大数据集后保证历史完整可见；文件仍追加式落盘）
 
 // ---------- 记录存储 ----------
 const records = []
@@ -62,6 +63,9 @@ function persist(rec) {
   while (records.length > MAX_RECORDS) records.shift()
   fs.appendFile(RECORDS_FILE, JSON.stringify(rec) + '\n', () => {})
 }
+
+// /api/traces 指纹缓存（records 追加式增长，fp 变化才重建）；正文 gzip（MB 级 JSON 文本冗余度高）
+let tracesCache = { fp: null, body: null, gz: null }
 console.log(`[gateway] 启动 port=${PORT} upstream=${FAKE ? '内置模拟' : UPSTREAM} 历史=${records.length} 条`)
 
 // ---------- 工具 ----------
@@ -110,10 +114,11 @@ function makeRecord(body, t0) {
     last?.role === 'user' && lastBlocks.some((b) => b.type === 'tool_result')
 
   const systemText = textOf(body.system)
+  // 预览只保留近尾上下文：长会话的「前 N 条」是跨任务的陈年历史，会让每一轮的消息流掺入无关内容
   const preview =
     msgs.length <= 4
       ? msgs
-      : [...msgs.slice(0, 2), { role: '…', content: `…共 ${msgs.length} 条消息…` }, ...msgs.slice(-2)]
+      : [{ role: '…', content: `…共 ${msgs.length} 条消息…` }, ...msgs.slice(-2)]
   // 会话开头的首条 user 消息全文（跨会话子 Agent 归因用：任务 prompt 常在 CLAUDE.md 提醒之后，2000 字截断会丢失）
   const firstUserFull =
     msgs.length <= 3 ? trunc(textOf(msgs.find((m) => m?.role === 'user')?.content), 8000) : undefined
@@ -359,7 +364,7 @@ const server = http.createServer(async (req, res) => {
     const cors = {
       'access-control-allow-origin': '*',
       'access-control-allow-methods': 'GET,POST,DELETE,OPTIONS',
-      'access-control-allow-headers': 'content-type',
+      'access-control-allow-headers': 'content-type, x-traces-fp',
     }
     if (req.method === 'OPTIONS') { res.writeHead(204, cors); res.end(); return }
     res.setHeader('content-type', 'application/json; charset=utf-8')
@@ -370,7 +375,24 @@ const server = http.createServer(async (req, res) => {
       return
     }
     if (url === '/api/traces' && req.method === 'GET') {
-      res.end(JSON.stringify({ generatedAt: Date.now(), traces: buildTraces(records) }))
+      // 指纹 + 缓存：记录未变化时直接返回空体（配合前端 x-traces-fp 跳过解析与重渲染），
+      // 变化时也复用已序列化的 JSON，避免每次轮询全量重建
+      const fp = `${records.length}:${records.length ? records[records.length - 1].ts : 0}`
+      if (req.headers['x-traces-fp'] === fp) {
+        res.writeHead(200, { 'x-traces-fp': fp })
+        res.end()
+        return
+      }
+      if (tracesCache.fp !== fp) {
+        const body = JSON.stringify({ generatedAt: Date.now(), traces: buildTraces(records) })
+        tracesCache = { fp, body, gz: zlib.gzipSync(body) }
+      }
+      const useGz = /gzip/.test(req.headers['accept-encoding'] || '')
+      res.writeHead(200, {
+        'x-traces-fp': fp,
+        ...(useGz && { 'content-encoding': 'gzip' }),
+      })
+      res.end(useGz ? tracesCache.gz : tracesCache.body)
       return
     }
     if (url === '/api/traces' && req.method === 'DELETE') {

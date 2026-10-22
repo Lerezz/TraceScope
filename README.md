@@ -70,9 +70,11 @@ npm run gateway             # 网关读取 claude.settings 的上游与 token
 1. **session**：从 `metadata.user_id` 的 `_session_` 后缀提取（无则按 system + 首条消息指纹）
 2. **轮次（turn）**：有效末条消息为纯用户文本 && 无未闭合 Task/Agent && 非子 Agent 接任务 → 新轮次（忽略 CC 2.1.x 追加在末尾的 `system` 提醒消息，如 `<total_tokens>`）
 3. **子 Agent（同会话，旧版 Task）**：响应含 `Task` tool_use 时开启容器；其后 system 指纹变化且任务未闭合的请求归入其下，收到对应 tool_result 时闭合
-4. **子 Agent（跨会话，CC 2.1.x Agent 异步委派）**：子 Agent 在独立 session 中运行，先按「委派 prompt ↔ 子会话首条消息全文」精确匹配，历史数据回退到任务特征关键词评分归因；多个并行委派各自成容器
+4. **子 Agent（跨会话，CC 2.1.x Agent 异步委派）**：子 Agent 在独立 session 中运行，先按「委派 prompt ↔ 子会话首条消息全文」精确匹配，历史数据回退到任务特征关键词评分归因；多个并行委派各自成容器。WebSearch 搜索子会话按「搜索词 ↔ 主会话 WebSearch tool_use」精确匹配并入父 Trace
 5. **工具 span**：上一请求 tool_use 与下一请求 tool_result 之间的时间窗，自动推导并行
-6. **后台 Agent**：同用户的无工具辅助请求（如 CC 的 security monitor）作为「后台 Agent」子树并入最近一条 Trace，主 Agent 委派与后台监控同屏观测
+6. **后台 Agent**：同用户的无工具辅助请求（如 CC 的 security monitor）逐条归因并入对应 Trace：与主会话共用 session 直接归位；monitor 的 transcript 开场即被审查会话的开场指令，据此归到该会话「开场所在」的链；识别不出归属的独立成后台 Trace，绝不按时间强挂（避免其它会话的审查记录灌进任务 Trace）
+7. **轮次来源标注**：每条 Trace 标注来源（用户输入 / 跨会话消息 / 系统通知 / 状态摘要 / 搜索 Agent / 子 Agent / 后台），区分真人输入与 CC 自动注入
+8. **会话链归并**：一次真人输入开启对话链，其后由自动注入触发的轮次（跨会话回传 / 系统通知等，跨多个 session）并入同一条大 Trace，每轮作为「轮次」容器——一夜自主运行 = 一条 Trace。**多终端并行对话时**，自动轮次按「session 亲和 → 链内独有关键词（任务号/端口/路径词）内容归因」归回原对话链，不会被最新开启的终端对话吸走
 
 ## 项目结构
 
